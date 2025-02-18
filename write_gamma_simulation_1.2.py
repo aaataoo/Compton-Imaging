@@ -9,6 +9,7 @@ import numpy as np
 import pandas as pd
 from lmfit import  Model
 import math
+
 def Comptom_angle(E_dep_bar2, E_dep_total):
     E = E_dep_total
     E1 = E_dep_bar2
@@ -88,7 +89,15 @@ Bar_Num_to_MCNP_Cell = np.array([
     [9,13],
     [10,14],
     [11,17],
-    [12,18]
+    [12,18],
+    [13,1],
+    [14,2],
+    [15,5],
+    [16,6],
+    [17,15],
+    [18,16],
+    [19,19],
+    [20,20]
     ])
 
 #---------------------------------------------------------------------------
@@ -156,7 +165,7 @@ if multiple_files:
         data_g = data[idx_g]
         #extract the whole row or column that match the condition 
 
-#%%
+
         histories_g = data_g[:,0].tolist()
         #convert 'histories' from MCNP output file to list
         histories_count = pd.Series(histories_g).value_counts()
@@ -174,13 +183,14 @@ if multiple_files:
         print("Number of Single Events: "+str(np.sum(histories_count[singles_mask])))
         print("Number of Double Events: "+str(int(np.sum(histories_count[doubles_mask])/2)))
         print("Number of Triple Events: "+str(int(np.sum(histories_count[triples_mask])/3)))
-        print("Number of Triple Events: "+str(int(np.sum(histories_count[four_mask])/4)))
+        print("Number of Four Events: "+str(int(np.sum(histories_count[four_mask])/4)))
         print("\n")
-#%%                     
+                     
         data_g[:,5] = data_g[:,5]*10 #Converting from shakes to ns
         
         All_Start_Times = data_g[:,5]
         time_add_hist = 0.0
+    
         for i in range(len(All_Start_Times)):
             time_add = i*1000000000
             hist_num = data_g[i-1,0]
@@ -195,7 +205,7 @@ if multiple_files:
         '''
         above is discriminating the events, only double events are returned
         '''
-#%%        
+       
         
         
         
@@ -222,13 +232,14 @@ if multiple_files:
             #First_Lived = PSD_Removal(int(First_Bar_number - 1), float(data_n[idx_B1,6]*1000.0)) #0-11 for first paramter input
             #Second_Lived = PSD_Removal(int(Second_Bar_number - 1), float(data_n[idx_B2,6]*1000.0))
             #if First_Lived and Second_Lived:
-#%%                
-            if First_Bar != Second_Bar: #making sure MPPost didn't do same bar twice
-                d_file_B1_unfilter = int(First_Bar)
-                d_file_B2_unfilter = int(Second_Bar)
+               
+            if First_Bar != Second_Bar and First_Bar<=12 and 13<= Second_Bar <=20: #making sure MPPost didn't do same bar twice
+                
+                d_file_B1 = int(First_Bar)
+                d_file_B2 = int(Second_Bar)
+                
                 d_file_bars_in_history = d_file[idx_B1_coord[1],5]
-                d_file_B1 = [x for x in d_file_B1_unfilter if 1 <= x <= 12] #OSG bar number
-                d_file_B2 = [x for x in d_file_B2_unfilter if 13 <= x <= 16] #Be bar number
+                
                 d_file_B1_idx = np.where(d_file_B1 == d_file_bars_in_history)[0]
                 d_file_B2_idx = np.where(d_file_B2 == d_file_bars_in_history)[0]
                 
@@ -240,21 +251,15 @@ if multiple_files:
                 Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][5] =  d_file[idx_B1_coord[1][d_file_B2_idx],8][0]   # x Bar 2
                 Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][6] =  d_file[idx_B1_coord[1][d_file_B2_idx],9][0]   # y Bar 2
                 Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][7] =  d_file[idx_B1_coord[1][d_file_B2_idx],10][0]  # z Bar 2
-                '''
-                change tof to comptom angles
-                if take off the comment the code will not run, there's energy loss more than half of the incident energy
-                i should eliminate 2 for gamma dataloader
-                '''
+                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][8] =  (data_g[idx_B2,5] - data_g[idx_B1,5])         # TOF Bar 1 to 2
+
                 Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][9] =  d_file[idx_B1_coord[1][d_file_B1_idx],6][0]   # Edep Bar 1
                 Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][10] = d_file[idx_B1_coord[1][d_file_B2_idx],6][0]   # Edep Bar 2
                 
-                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][8] =  Comptom_angle(d_file[idx_B1_coord[1][d_file_B2_idx],6][0] , d_file[idx_B1_coord[1][d_file_B1_idx],6][0]+d_file[idx_B1_coord[1][d_file_B2_idx],6][0]) 
-                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][11] = 1 #placeholder, pymppost didnt rteurn this    # MCNP Energy before collision (E_TOF)
+                #Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][8] =  Comptom_angle(d_file[idx_B1_coord[1][d_file_B2_idx],6][0] , d_file[idx_B1_coord[1][d_file_B1_idx],6][0]+d_file[idx_B1_coord[1][d_file_B2_idx],6][0]) 
+                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][11] = 1 #placeholder, pymppost didnt rteurn this   
                 folder_psd_double_counts = folder_psd_double_counts + 1
-                
-            else:    
-                print('Disqualified history!')
-            
+                            
     print("After PSD:")
     print("MCNP Neutron Event Breakdown (After Coincidence Logic):")
     print("Number of Double Events: "+str(folder_psd_double_counts))
