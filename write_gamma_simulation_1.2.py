@@ -7,9 +7,11 @@ Created on Tue Feb 11 22:12:18 2025
 
 import numpy as np
 import pandas as pd
-from lmfit import  Model
-import math
 
+
+
+'''
+import math
 def Comptom_angle(E_dep_bar2, E_dep_total):
     E = E_dep_total
     E1 = E_dep_bar2
@@ -20,7 +22,7 @@ def Comptom_angle(E_dep_bar2, E_dep_total):
     print(cos_theta)
     theta = math.acos(cos_theta) 
     return theta
-
+'''
 
 def Writing_Data(Doubles_Data):
 
@@ -35,10 +37,11 @@ def Writing_Data(Doubles_Data):
     tof ='f8'
     Edep1_d ='f9'
     Edep2_d = 'f10'
-    Edep1_o ='f11'
-    Edep2_o = 'f12'
-    Etof = 'f13'
-    outputStructure = np.zeros(len(Doubles_Data), dtype='int16, int16, float64, float64, float64, float64, float64, float64, float64, float64, float64, float64, float64, float64')
+    place_holder ='f11'
+    undeter_1 = 'f12'
+    undeter_2 = 'f13'
+    outputStructure = np.zeros(len(Doubles_Data), 
+                               dtype='int16, int16, float64, float64, float64, float64, float64, float64, float64, float64, float64, float64, float64, float64')
     
     for coincidence in np.arange(0,len(Doubles_Data),1):
         outputStructure[coincidence][Bar_1] = Doubles_Data[coincidence][0]
@@ -52,9 +55,9 @@ def Writing_Data(Doubles_Data):
         outputStructure[coincidence][tof] = Doubles_Data[coincidence][8]
         outputStructure[coincidence][Edep1_d] = Doubles_Data[coincidence][9]
         outputStructure[coincidence][Edep2_d] = Doubles_Data[coincidence][10]
-        outputStructure[coincidence][Edep1_o] = Doubles_Data[coincidence][11]
-        outputStructure[coincidence][Edep2_o] = Doubles_Data[coincidence][12]
-        outputStructure[coincidence][Etof] = Doubles_Data[coincidence][13]
+        outputStructure[coincidence][place_holder] = Doubles_Data[coincidence][11]
+        outputStructure[coincidence][undeter_1] = Doubles_Data[coincidence][12]
+        outputStructure[coincidence][undeter_2] = Doubles_Data[coincidence][13]
     outputStructure.tofile(Out)
 # np.random.seed(117)
 #----------------------------------------------------------------------------1-
@@ -110,18 +113,25 @@ def Finding_Coincident_Events(All_Times, Min_Time_Window_Bar, Max_Time_Window_Ba
     Coincidences = []
     Coincidence_Doubles = []
     Coincidence_Triples = []
+    Coincidence_Four = []
     Data_Counter = 0
  
-    while Data_Counter < len(All_Times)-2:
+    while Data_Counter < len(All_Times)-3:
         First = All_Times[Data_Counter]
         Second = All_Times[Data_Counter+1]
         Third = All_Times[Data_Counter+2]
+        Fourth = All_Times[Data_Counter+3]
         if First == 0:
             Data_Counter+=1
         else:
             First_Diff = Second - First 
             Second_Diff = Third - First
-            if Second_Diff < Max_Time_Window_Bar and Second_Diff > Min_Time_Window_Bar:
+            Third_Diff = Fourth - First
+            if Third_Diff < Max_Time_Window_Bar and Third_Diff > Min_Time_Window_Bar:
+                Coincidence = [First, Second, Third, Fourth]
+                Coincidence_Four.append(Coincidence)
+                Data_Counter+=4
+            elif Second_Diff < Max_Time_Window_Bar and Second_Diff > Min_Time_Window_Bar:
                 Coincidence = [First, Second, Third]
                 Coincidence_Triples.append(Coincidence)
                 Data_Counter+=3
@@ -133,9 +143,10 @@ def Finding_Coincident_Events(All_Times, Min_Time_Window_Bar, Max_Time_Window_Ba
             else:
                 Data_Counter+=1
                 
-    print("MCNP Neutron Event Breakdown (After Coincidence Logic):")
+    print("MCNP Gamma Event (After Coincidence Logic):")
     print("Number of Double Events: "+str(len(Coincidence_Doubles)))
     print("Number of Triple Events: "+str(len(Coincidence_Triples)))
+    print("Number of Four Events: "+str(len(Coincidence_Four)))
     print("\n")
     return Coincidences
 
@@ -260,15 +271,15 @@ if multiple_files:
                 Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][11] = 1 #placeholder, pymppost didnt rteurn this   
                 folder_psd_double_counts = folder_psd_double_counts + 1
                             
-    print("After PSD:")
-    print("MCNP Neutron Event Breakdown (After Coincidence Logic):")
+    print("After determining the first event at OSG bar and second event at CeBr3:")
+    print("MCNP gammas Event (After Coincidence Logic):")
     print("Number of Double Events: "+str(folder_psd_double_counts))
     print("\n")
     total_psd_double_counts = total_psd_double_counts + folder_psd_double_counts
     total_no_psd_double_counts = total_no_psd_double_counts + len(Coincident_Events_no_psd)
     
-print('Total double scatter events found (Before PSD): '+str(total_no_psd_double_counts))
-print('Total double scatter events written to file (After PSD): '+str(total_psd_double_counts))
+print('Total double scatter events found : '+str(total_no_psd_double_counts))
+print('Total double scatter events written to file (After discriminate): '+str(total_psd_double_counts))
 print("\n")
 
 Out = open(r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\For Vincnet\Simulation_gamma_Doubles_File_OGS_PyMPPost_Processed.dat","wb")
