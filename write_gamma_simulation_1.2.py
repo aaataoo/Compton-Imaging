@@ -244,7 +244,7 @@ if multiple_files:
             #Second_Lived = PSD_Removal(int(Second_Bar_number - 1), float(data_n[idx_B2,6]*1000.0))
             #if First_Lived and Second_Lived:
                
-            if First_Bar != Second_Bar and First_Bar<=12 and 13<= Second_Bar <=20: #making sure MPPost didn't do same bar twice
+            if First_Bar != Second_Bar and First_Bar<=12 and 13<= Second_Bar <=20: 
                 
                 d_file_B1 = int(First_Bar)
                 d_file_B2 = int(Second_Bar)
@@ -271,7 +271,7 @@ if multiple_files:
                 Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][11] = 1 #placeholder, pymppost didnt rteurn this   
                 folder_psd_double_counts = folder_psd_double_counts + 1
                             
-    print("After determining the first event at OSG bar and second event at CeBr3:")
+    print("After determining the first event at OGS bar and second event at CeBr3:")
     print("MCNP gammas Event (After Coincidence Logic):")
     print("Number of Double Events: "+str(folder_psd_double_counts))
     print("\n")
@@ -282,11 +282,35 @@ print('Total double scatter events found : '+str(total_no_psd_double_counts))
 print('Total double scatter events written to file (After discriminate): '+str(total_psd_double_counts))
 print("\n")
 
-Out = open(r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\For Vincnet\Simulation_gamma_Doubles_File_OGS_PyMPPost_Processed.dat","wb")
+file_destination = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\project\Simulation_gamma_Doubles_File_OGS_PyMPPost_Processed.dat"
+Out = open(file_destination,"wb")
 Writing_Data(Coincident_Data_Out[:total_psd_double_counts])
 Out.close()
+#%%
+import numpy as np
+import pandas as pd
+
+def Writing_Data_to_xlsx(Doubles_Data, file):
+    columns = ['Bar_1', 'Bar_2', 'x1', 'y1', 'z1', 'x2', 'y2', 'z2', 'tof', 
+               'Edep1_d', 'Edep2_d', 'place_holder', 'undeter_1', 'undeter_2']
+    
+    
+    df = pd.DataFrame(Doubles_Data, columns=columns)
+    
+    
+    df.to_excel(file, index=False)
+
+Doubles_Data = np.random.rand(10, 14)  # 生成 10 行 14 列随机数据
+Writing_Data_to_xlsx(Coincident_Data_Out[:total_psd_double_counts], "output.xlsx")
 
 
+
+
+#%%
+file_destination = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\project\Simulation_gamma_Doubles_File_OGS_PyMPPost_Processed.txt"
+out = open(file_destination, "wb")
+Writing_Data(Coincident_Data_Out[:total_psd_double_counts], out)
+out.close()
 
 
 
