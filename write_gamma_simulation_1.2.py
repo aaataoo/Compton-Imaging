@@ -306,14 +306,6 @@ Writing_Data_to_xlsx(Coincident_Data_Out[:total_psd_double_counts], "output.xlsx
 
 
 
-#%%
-file_destination = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\project\Simulation_gamma_Doubles_File_OGS_PyMPPost_Processed.txt"
-out = open(file_destination, "wb")
-Writing_Data(Coincident_Data_Out[:total_psd_double_counts], out)
-out.close()
-
-
-
 
 
     
