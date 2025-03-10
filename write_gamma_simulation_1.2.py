@@ -37,11 +37,11 @@ def Writing_Data(Doubles_Data):
     tof ='f8'
     Edep1_d ='f9'
     Edep2_d = 'f10'
-    place_holder ='f11'
-    undeter_1 = 'f12'
-    undeter_2 = 'f13'
+    Etotal ='f11'
+    #undeter_1 = 'f12'
+    #undeter_2 = 'f13'
     outputStructure = np.zeros(len(Doubles_Data), 
-                               dtype='int16, int16, float64, float64, float64, float64, float64, float64, float64, float64, float64, float64, float64, float64')
+                               dtype='int16, int16, float64, float64, float64, float64, float64, float64, float64, float64, float64, float64')
     
     for coincidence in np.arange(0,len(Doubles_Data),1):
         outputStructure[coincidence][Bar_1] = Doubles_Data[coincidence][0]
@@ -55,9 +55,9 @@ def Writing_Data(Doubles_Data):
         outputStructure[coincidence][tof] = Doubles_Data[coincidence][8]
         outputStructure[coincidence][Edep1_d] = Doubles_Data[coincidence][9]
         outputStructure[coincidence][Edep2_d] = Doubles_Data[coincidence][10]
-        outputStructure[coincidence][place_holder] = Doubles_Data[coincidence][11]
-        outputStructure[coincidence][undeter_1] = Doubles_Data[coincidence][12]
-        outputStructure[coincidence][undeter_2] = Doubles_Data[coincidence][13]
+        outputStructure[coincidence][Etotal] = Doubles_Data[coincidence][11]
+        #outputStructure[coincidence][undeter_1] = Doubles_Data[coincidence][12]
+        #outputStructure[coincidence][undeter_2] = Doubles_Data[coincidence][13]
     outputStructure.tofile(Out)
 # np.random.seed(117)
 #----------------------------------------------------------------------------1-
@@ -152,9 +152,9 @@ def Finding_Coincident_Events(All_Times, Min_Time_Window_Bar, Max_Time_Window_Ba
 
 
 
-
+#--------------------------------------------------------------2
 if multiple_files:
-    Coincident_Data_Out = np.zeros((10000*nFiles, 14)) #why (10000*1) * 14?
+    Coincident_Data_Out = np.zeros((10000*nFiles, 12)) #why (10000*1) * 12?
     for j in range(nFiles):
     
         # filename = base+exp+'pymppost_files/carbon_1_5/0_ns/RL52_Neg'+str(j)+'_All_pulses'    
@@ -268,7 +268,7 @@ if multiple_files:
                 Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][10] = d_file[idx_B1_coord[1][d_file_B2_idx],6][0]   # Edep Bar 2
                 
                 #Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][8] =  Comptom_angle(d_file[idx_B1_coord[1][d_file_B2_idx],6][0] , d_file[idx_B1_coord[1][d_file_B1_idx],6][0]+d_file[idx_B1_coord[1][d_file_B2_idx],6][0]) 
-                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][11] = 1 #placeholder, pymppost didnt rteurn this   
+                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][11] =  d_file[idx_B1_coord[1][d_file_B1_idx],6][0] + d_file[idx_B1_coord[1][d_file_B2_idx],6][0]  
                 folder_psd_double_counts = folder_psd_double_counts + 1
                             
     print("After determining the first event at OGS bar and second event at CeBr3:")
@@ -292,7 +292,7 @@ import pandas as pd
 
 def Writing_Data_to_xlsx(Doubles_Data, file):
     columns = ['Bar_1', 'Bar_2', 'x1', 'y1', 'z1', 'x2', 'y2', 'z2', 'tof', 
-               'Edep1_d', 'Edep2_d', 'place_holder', 'undeter_1', 'undeter_2']
+               'Edep1_d', 'Edep2_d', 'Etotal']
     
     
     df = pd.DataFrame(Doubles_Data, columns=columns)
@@ -300,7 +300,7 @@ def Writing_Data_to_xlsx(Doubles_Data, file):
     
     df.to_excel(file, index=False)
 
-Doubles_Data = np.random.rand(10, 14)  # 生成 10 行 14 列随机数据
+#Doubles_Data = np.random.rand(10, 14)  # 生成 10 行 14 列随机数据
 Writing_Data_to_xlsx(Coincident_Data_Out[:total_psd_double_counts], "output.xlsx")
 
 
