@@ -77,8 +77,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
             Data_Out[good_counter][9] = Waves[event][9]       # Edep Bar 1 [MeV]
             Data_Out[good_counter][10] = Waves[event][10]     # Edep Bar 2 [MeV]
             Data_Out[good_counter][11] = Waves[event][11]     # Etotal 
-            #Data_Out[good_counter][12] = Waves[event][12]     # undertermine_1
-            #Data_Out[good_counter][13] = Waves[event][13]     # undertermine_2
+            
             good_counter+=1
     
         print("\n")
@@ -216,12 +215,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
         Edep_2_Counter = 0
         Edep_Both = 0
         
-        # Commented out because avoiding using perfect Energy values from MCNP
-        # Birks_Fit = Birks(a=0.518,b=2.392)
-        # Birks_Fit = Birks(a=0.5366095577079871,b=2.6780735541073404)
-        # E_Cutoff = Find_E(Birks_Fit, LO_Cutoff)
-        # Max_E_Cutoff = Find_E(Birks_Fit, Max_LO_Cutoff)
-        
+             
         for double in Doubles_Data:
             E1_pass = False
             Edep_1 = double[9] #modified
@@ -237,23 +231,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
                 Data_Out[Edep_Both] = double
                 Edep_Both+=1
     
-        # for double in Doubles_Data:
-        #     E1_pass = False
-        #     E_1 = double[9]
-        #     LO_1 = double[11]
-        #     E2_pass = False
-        #     E_2 = double[10]
-        #     LO_2 = double[12]
-        #     if E_1 > E_Cutoff and E_1 < Max_E_Cutoff and LO_1 > LO_Cutoff/1000 and LO_1 < Max_LO_Cutoff/1000:
-        #         Edep_1_Counter+=1
-        #         E1_pass = True
-        #     if E_2 > E_Cutoff and E_2 < Max_E_Cutoff and LO_2 > LO_Cutoff/1000 and LO_2 < Max_LO_Cutoff/1000:
-        #         Edep_2_Counter+=1
-        #         E2_pass = True
-        #     if E1_pass and E2_pass:
-        #         Data_Out[Edep_Both] = double
-        #         Edep_Both+=1
-    
+        
         print("\n")
         print("Number of interactions in first bar within LO thresholds/E thresholds: "+str(Edep_1_Counter))
         print("Number of interactions in second bar within LO thresholds/E thresholds: "+str(Edep_2_Counter))
@@ -339,21 +317,24 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
         for event in np.arange(0, len(E_Cut_Applied_Data), 1):
             Bar_1 = int(E_Cut_Applied_Data[event][0])
             Bar_2 = int(E_Cut_Applied_Data[event][1])
-            ## Exact according to MCNP
-            # X_1 = E_Cut_Applied_Data[event][2]
-            # Y_1 = E_Cut_Applied_Data[event][3]
-            # Z_1 = E_Cut_Applied_Data[event][4]
-            # X_2 = E_Cut_Applied_Data[event][5]
-            # Y_2 = E_Cut_Applied_Data[event][6]
-            # Z_2 = E_Cut_Applied_Data[event][7]
-            ## Center of bars like in experiment
+            
+            # Exact according to MCNP
+            
+            X_1 = E_Cut_Applied_Data[event][2]
+            Y_1 = E_Cut_Applied_Data[event][3]
+            Z_1 = E_Cut_Applied_Data[event][4]
+            X_2 = E_Cut_Applied_Data[event][5]
+            Y_2 = E_Cut_Applied_Data[event][6]
+            Z_2 = E_Cut_Applied_Data[event][7]
+            '''
+            # Center of bars like in experiment
             X_1 = Center_Bars_Pos[Bar_1][0]
             Y_1 = Center_Bars_Pos[Bar_1][1]
             Z_1 = Center_Bars_Pos[Bar_1][2]
             X_2 = Center_Bars_Pos[Bar_2][0]
             Y_2 = Center_Bars_Pos[Bar_2][1]
             Z_2 = Center_Bars_Pos[Bar_2][2]
-            
+            '''
             Z_1_un = Z_Uncertainty(Z_1, Bar_1, (E_Cut_Applied_Data[event][9]*1000)) #E_dep1
             Z_2_un = Z_Uncertainty(Z_2, Bar_2, (E_Cut_Applied_Data[event][10]*1000)) #E_dep2
             
@@ -381,9 +362,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
                 Data_Out[good_counter][9] = E_Cut_Applied_Data[event][9]       # Edep Bar 1 [MeV]
                 Data_Out[good_counter][10] = E_Cut_Applied_Data[event][10]     # Edep Bar 2 [MeV]
                 Data_Out[good_counter][11] = E_Cut_Applied_Data[event][11]     # E_total
-                Data_Out[good_counter][12] = E_Cut_Applied_Data[event][12]
-                #Data_Out[good_counter][12] = E_Cut_Applied_Data[event][12]     # LO Bar 2 [MeVee]
-                #Data_Out[good_counter][13] = E_Cut_Applied_Data[event][13]     # E_TOF [MeV]
+                Data_Out[good_counter][12] = E_Cut_Applied_Data[event][12]     # History
                 good_counter+=1
     
         print("\n")
@@ -400,16 +379,11 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
     #change the e error to 10% of E instead of 1 kev!
     def E_TOF_LO(Position_Data):
         Data_Out = np.zeros((len(Position_Data),16)) #+7 new entries? why seven more entries
-        # Birks_Fit = Birks(a=0.518,b=2.392)
-        Birks_Fit = Birks(a=0.5366095577079871,b=2.6780735541073404)
+        
         
         E1list_e = []
         E2list_e = []
         Etotlist_e = []
-        E1list_lo = []
-        E2list_lo = []
-        Etoflist_mcnp = []
-        Etoflist_calc = []
         
         Un_Etotlist_e = []
         Rel_Un_Etotlist_e = []
@@ -417,24 +391,12 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
         Un_E1list_e = []
         Rel_Un_E1list_e = []
         
-        Un_E1list_lo = []
-        Rel_Un_E1list_lo = []
         
         Un_E2list_e = []
         Rel_Un_E2list_e = []
         
-        Un_E2list_lo = []
-        Rel_Un_E2list_lo = []
         
-        Un_Etoflist_mcnp = []
-        Rel_Un_Etoflist_mcnp = []
-        Un_Etoflist_calc = []
-        Rel_Un_Etoflist_calc = []
-    
-        Total_Energies_no_TOF_Check = []
-        Total_Energies_yes_TOF_Check = []  
-        Un_Totlist = []
-        Rel_Un_Totlist = []
+        
         good_counter = 0
         
         x1list = []
@@ -450,123 +412,28 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
             Vector_1 = np.array([Position_Data[event][2], Position_Data[event][3], Position_Data[event][4]]) #bar 1 vector (x1, y1, z1)
             Vector_2 = np.array([Position_Data[event][5], Position_Data[event][6], Position_Data[event][7]])
             Diff_Vecs = Vector_1 - Vector_2
-            Mag = np.linalg.norm(Diff_Vecs) #vector length
-            #velocity = Mag/Position_Data[event][8] #cm/ns  neutron velocity              not in gamma 
-            #Etof_calc = 0.5*939.56542052*(velocity/29.9792458)**2   #neutron energy based on TOF    not in gamma
-            ##print("Calculated E_TOF: "+str(Etof_calc))
+            
             E_1_e = Position_Data[event][9]  #Edep1 in terms of MeV
             Un_E_1_e = 0.001
             E_2_e = Position_Data[event][10] #Edep2 in terms of MeV
             Un_E_2_e = 0.001
             E_total_v = Position_Data[event][11]
             Un_E_total_v = np.sqrt(Un_E_1_e**2 + Un_E_2_e**2)
-            '''
-            E_1_lo = Find_E(Birks_Fit, (Position_Data[event][11]*1000)) #LO Bar 1 [MeVee] converted to MeV,,,,deposit energy
-            Un_Light_Outputs = LO_Uncertainty(Position_Data[event], Position_Data[event][11], Position_Data[event][12]) # returns un_LO1 and 2 in MeVee   
-            Un_LO_1 = Un_Light_Outputs[0]*1000.0
-            Un_LO_2 = Un_Light_Outputs[1]*1000.0  
-            Un_E_1_lo = Find_dE_dL(Birks_Fit, (Position_Data[event][11]*1000))*Un_LO_1  # Returns derivative MeV/keVee
-            E_2_lo = Find_E(Birks_Fit, (Position_Data[event][12]*1000)) 
-            Un_E_2_lo = Find_dE_dL(Birks_Fit, (Position_Data[event][12]*1000))*Un_LO_2  # Returns derivative MeV/keVee
-            '''
-            #Etof_mcnp = Position_Data[event][13]
-            ##print("MCNP Direct E_TOF: "+str(Etof))
-            #TOF_Uncertainty = Uncertainty_TOF(Position_Data[event])
-            
-            # ## Option A       
-            # E_Tot_A = E_1_e + Etof_mcnp
-            # E_Tot = E_Tot_A
-            # Un_Totlist.append(np.sqrt(TOF_Uncertainty**2+Un_E_1_e**2))
-            # Rel_Un_Totlist.append(np.sqrt(TOF_Uncertainty**2+Un_E_1_e**2)/E_Tot*100.0)
-            # E_2 = E_2_e
-            # Etof = Etof_mcnp
-            # E_1 = E_1_e
-            # Un_E_1 = Un_E_1_e
-            # ## Option B   
-            # E_Tot_B = E_1_e + Etof_calc
-            # E_Tot = E_Tot_B
-            # Un_Totlist.append(np.sqrt(TOF_Uncertainty**2+Un_E_1_e**2))
-            # Rel_Un_Totlist.append(np.sqrt(TOF_Uncertainty**2+Un_E_1_e**2)/E_Tot*100.0)
-            # E_2 = E_2_e
-            # Etof = Etof_calc
-            # E_1 = E_1_e
-            # Un_E_1 = Un_E_1_e
-            # ## Option C 
-            # E_Tot_C = E_1_lo + Etof_mcnp
-            # E_Tot = E_Tot_C
-            # Un_Totlist.append(np.sqrt(TOF_Uncertainty**2+Un_E_1_lo**2))
-            # Rel_Un_Totlist.append(np.sqrt(TOF_Uncertainty**2+Un_E_1_lo**2)/E_Tot*100.0)
-            # E_2 = E_2_lo
-            # Etof = Etof_mcnp
-            # E_1 = E_1_lo
-            # Un_E_1 = Un_E_1_lo
-            ## Option D  
-            #E_Tot_D = E_1_lo + Etof_calc
-            #E_Tot = E_Tot_D
-            #Un_Totlist.append(np.sqrt(TOF_Uncertainty**2+Un_E_1_lo**2))
-            #Rel_Un_Totlist.append(np.sqrt(TOF_Uncertainty**2+Un_E_1_lo**2)/E_Tot*100.0)
-            #E_2 = E_2_lo
-            #Etof = Etof_calc
-            #E_1 = E_1_lo
-            #Un_E_1 = Un_E_1_lo
             
             E1list_e.append(E_1_e)
             E2list_e.append(E_2_e)
             Etotlist_e.append(E_total_v)
-            #E1list_lo.append(E_1_lo)
-            #E2list_lo.append(E_2_lo)
-            #Etoflist_mcnp.append(Etof_mcnp)
-            #Etoflist_calc.append(Etof_calc)
-            #Total_Energies_no_TOF_Check.append(E_Tot)
             
             Un_E1list_e.append(Un_E_1_e)
             Rel_Un_E1list_e.append(Un_E_1_e/E_1_e*100.0) #relative uncertainty
-            #Un_E1list_lo.append(Un_E_1_lo)
-            #Rel_Un_E1list_lo.append(Un_E_1_lo/E_1_lo*100.0)
+            
             Un_E2list_e.append(Un_E_2_e)
             Rel_Un_E2list_e.append(Un_E_2_e/E_2_e*100.0)
-            #Un_E2list_lo.append(Un_E_2_lo)
-            #Rel_Un_E2list_lo.append(Un_E_2_lo/E_2_lo*100.0)
+            
             Un_Etotlist_e.append(Un_E_total_v)
             Rel_Un_Etotlist_e.append(Un_E_total_v/E_total_v*100.0)
             
-            #Un_Etoflist_mcnp.append(TOF_Uncertainty)
-            #Rel_Un_Etoflist_mcnp.append(TOF_Uncertainty/Etof_mcnp*100.0)
-            #Un_Etoflist_calc.append(TOF_Uncertainty)
-            #Rel_Un_Etoflist_calc.append(TOF_Uncertainty/Etof_calc*100.0)
-            '''
-    
-            if E_2 < Etof:
-                #Maybe append everything here ater the cut?
-                Total_Energies_yes_TOF_Check.append(E_Tot)
-                Data_Out[good_counter][0] = Position_Data[event][0] # Bar 1 
-                Data_Out[good_counter][1] = Position_Data[event][1] # Bar 2 
-                Data_Out[good_counter][2] = Position_Data[event][2] # X1
-                Data_Out[good_counter][3] = Position_Data[event][3] # Y1
-                Data_Out[good_counter][4] = Position_Data[event][4] # Z1
-                Data_Out[good_counter][5] = Position_Data[event][5] # X2
-                Data_Out[good_counter][6] = Position_Data[event][6] # Y2
-                Data_Out[good_counter][7] = Position_Data[event][7] # Z2
-                Data_Out[good_counter][8] = Position_Data[event][8] # TOF [ns]
-                Data_Out[good_counter][9] = Etof
-                Data_Out[good_counter][10] = E_1
-                Data_Out[good_counter][11] = E_2
-                Data_Out[good_counter][12] = E_Tot
-                Data_Out[good_counter][13] = Position_Data[event][11]*1000 #E_1 actually in LO [keVee]
-                Data_Out[good_counter][14] = Position_Data[event][12]*1000 #E_2 actually in LO [keVee]
-                Data_Out[good_counter][15] = 0
-                Data_Out[good_counter][16] = 0
-                Data_Out[good_counter][17] = Un_E_1
-                Data_Out[good_counter][18] = 0 #Un_E_2
-                Data_Out[good_counter][19] = TOF_Uncertainty
-                Data_Out[good_counter][20] = np.sqrt(TOF_Uncertainty**2+Un_E_1**2)/E_Tot*100.0
-                good_counter+=1
-    
-        print("\n")
-        print("Number of events before E_TOF filtering: "+str(len(Position_Data)))
-        print("Number of events after E_TOF filtering: "+str(good_counter))
-        print("\n")
-        '''
+            
         
             Data_Out[good_counter][0] = Position_Data[event][0] # Bar 1 
             Data_Out[good_counter][1] = Position_Data[event][1] # Bar 2 
@@ -580,16 +447,12 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
             Data_Out[good_counter][9] = E_1_e
             Data_Out[good_counter][10] = E_2_e
             Data_Out[good_counter][11] = E_total_v
-            #Data_Out[good_counter][13] = Position_Data[event][11]*1000 #E_1 actually in LO [keVee]
-            #Data_Out[good_counter][14] = Position_Data[event][12]*1000 #E_2 actually in LO [keVee]
-            #Data_Out[good_counter][15] = 0
-            #Data_Out[good_counter][16] = 0
+            
             Data_Out[good_counter][12] = Un_E_1_e
             Data_Out[good_counter][13] = Un_E_2_e
             Data_Out[good_counter][14] = Un_E_total_v
             Data_Out[good_counter][15] = Position_Data[event][-1] #history
-            #Data_Out[good_counter][19] = TOF_Uncertainty
-            #Data_Out[good_counter][20] = np.sqrt(TOF_Uncertainty**2+Un_E_1**2)/E_Tot*100.0
+            
             good_counter+=1
             
         
@@ -633,33 +496,15 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
     
         ## Uncertainty Plots  
         print("[Direct]     Average Neutron Energy Deposition in First Scatter: "+str(np.average(E1list_e))+" MeV")
-        #print("[Calculated] Average Neutron Energy Deposition in First Scatter: "+str(np.average(E1list_lo))+" MeV")
         print("[Direct]     Average Neutron Energy Deposition in Second Scatter: "+str(np.average(E2list_e))+" MeV")
-        #print("[Calculated] Average Neutron Energy Deposition in Second Scatter: "+str(np.average(E2list_lo))+" MeV")
         print("\n")
         print("[Direct]     Average Neutron Energy Deposition (First Scatter) Uncertainty: "+str(np.average(Un_E1list_e))+" MeV")
-        #print("[Calculated] Average Neutron Energy Deposition (First Scatter) Uncertainty: "+str(np.average(Un_E1list_lo))+" MeV")
         print("[Direct]     Average Neutron Energy Deposition (Second Scatter) Uncertainty: "+str(np.average(Un_E2list_e))+" MeV")
-        #print("[Calculated] Average Neutron Energy Deposition (Second Scatter) Uncertainty: "+str(np.average(Un_E2list_lo))+" MeV")
         print("\n")
         print("[Direct]     Average Neutron Energy Deposition (First Scatter) Relative Uncertainty: "+str(np.average(Rel_Un_E1list_e))+" %")
-        #print("[Calculated] Average Neutron Energy Deposition (First Scatter) Relative Uncertainty: "+str(np.average(Rel_Un_E1list_lo))+" %")
         print("[Direct]     Average Neutron Energy Deposition (Second Scatter) Relative Uncertainty: "+str(np.average(Rel_Un_E2list_e))+" %")
-        #print("[Calculated] Average Neutron Energy Deposition (Second Scatter) Relative Uncertainty: "+str(np.average(Rel_Un_E2list_lo))+" %")
-        #print("\n")
-        #print("[Direct]     Average Neutron TOF Uncertainty: "+str(np.average(Un_Etoflist_mcnp))+" MeV")
-        #print("[Calculated] Average Neutron TOF Uncertainty: "+str(np.average(Un_Etoflist_calc))+" MeV")
         print("\n")
-        #print("[Direct]     Average Neutron TOF Relative Uncertainty: "+str(np.average(Rel_Un_Etoflist_mcnp))+" %")
-        #print("[Calculated] Average Neutron TOF Relative Uncertainty: "+str(np.average(Rel_Un_Etoflist_calc))+" %")
-        #print("\n")
-        #print("Average Reconstructed Neutron Energy (before TOF check): "+str(np.average(Total_Energies_no_TOF_Check))+" MeV")
-        #print("Average Reconstructed Neutron Energy (after TOF check): "+str(np.average(Total_Energies_yes_TOF_Check))+" MeV")
-        #print("\n")
-        #print("Average Reconstructed Neutron Energy Uncertainty: "+str(np.average(Un_Totlist))+" MeV")
-        #print("Average Reconstructed Neutron Energy Relative Uncertainty: "+str(np.average(Rel_Un_Totlist))+" %")
-        #print("\n")
-    
+        '''
         plt.hist(E1list_e, bins=100, range=[0,10], histtype='step')
         plt.xlabel("Energy (MeV)")
         plt.ylabel("Counts")
@@ -668,16 +513,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
         plt.title("E_1 Plot - MCNP")
         plt.show()
         plt.close()
-        '''
-        plt.hist(E1list_lo, bins=100, range=[0,10], histtype='step')
-        plt.xlabel("Energy (MeV)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title("E_1 Plot - MPPost/Birks")
-        plt.show()
-        plt.close()
-        '''
+        
         
         plt.hist(E2list_e, bins=100, range=[0,10], histtype='step')
         plt.xlabel("Energy (MeV)")
@@ -687,57 +523,6 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
         plt.title("E_2 Plot - MCNP")
         plt.show()
         plt.close()
-        '''
-        plt.hist(E2list_lo, bins=100, range=[0,10], histtype='step')
-        plt.xlabel("Energy (MeV)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title("E_2 Plot - MPPost/Birks")
-        plt.show()
-        plt.close()
-        '''
-        '''
-        plt.hist(Etoflist_mcnp, bins=100, range=[0,10], histtype='step')
-        plt.xlabel("Energy (MeV)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title("E_TOF - MCNP")
-        plt.show()
-        plt.close()
-        '''
-        '''
-        plt.hist(Etoflist_calc, bins=100, range=[0,10], histtype='step')
-        plt.xlabel("Energy (MeV)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title("E_TOF - Calculated")
-        plt.show()
-        plt.close()
-        '''
-        '''
-        plt.hist(Total_Energies_yes_TOF_Check, bins=100, range=[0,10], histtype='step')
-        plt.xlabel("Neutron Energy (MeV)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title("Reconstructed Neutron Energy (Before Imaging)")
-        plt.show()
-        plt.close()
-        '''
-        # plt.hist(Data_A, bins=100, range=[0,10], label='Option A', histtype='step')
-        # plt.hist(Data_B, bins=100, range=[0,10], label='Option B', histtype='step')
-        # plt.hist(Data_C, bins=100, range=[0,10], label='Option C', histtype='step')
-        # plt.hist(Data_D, bins=100, range=[0,10], label='Option D', histtype='step')
-        # plt.legend()
-        # plt.xlabel("Neutron Energy (MeV)")
-        # plt.ylabel("Counts")
-        # plt.yscale('log')
-        # plt.tight_layout()
-        # plt.title("Reconstructed Neutron Energy (Before Imaging)")
-        # plt.show()  
         
         plt.hist(Un_E1list_e, bins=100, range=[0,1], label='Uncertainty in E$_{1}$', histtype='step')
         plt.legend()
@@ -748,17 +533,8 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
         plt.title("Uncertainty Plot - MCNP")
         plt.show()
         plt.close()
-        '''
-        plt.hist(Un_E1list_lo, bins=100, range=[0,1], label='Uncertainty in E$_{1}$', histtype='step')
-        plt.legend()
-        plt.xlabel("Uncertainty in Energy (MeV)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title("Uncertainty Plot - Birks")
-        plt.show()
-        plt.close()
-        '''
+        
+        
         plt.hist(Rel_Un_E1list_e, bins=200, range=[0,200], label='Uncertainty in E$_{1}$', histtype='step')
         plt.legend()
         plt.xlabel("Relative Uncertainty (%)")
@@ -768,18 +544,8 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
         plt.title("Uncertainty Plot - MCNP")
         plt.show()
         plt.close()
-        '''
-        plt.hist(Rel_Un_E1list_lo, bins=200, range=[0,200], label='Uncertainty in E$_{1}$', histtype='step')
-        plt.legend()
-        plt.xlabel("Relative Uncertainty (%)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title("Uncertainty Plot - Birks")
-        plt.show()
-        plt.close()
-        '''
-    
+        
+        
         plt.hist(Un_E2list_e, bins=100, range=[0,1], label='Uncertainty in E$_{2}$', histtype='step')
         plt.legend()
         plt.xlabel("Uncertainty in Energy (MeV)")
@@ -789,17 +555,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
         plt.title("Uncertainty Plot - MCNP")
         plt.show()
         plt.close()
-        '''
-        plt.hist(Un_E2list_lo, bins=100, range=[0,1], label='Uncertainty in E$_{2}$', histtype='step')
-        plt.legend()
-        plt.xlabel("Uncertainty in Energy (MeV)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title("Uncertainty Plot - Birks")
-        plt.show()
-        plt.close()
-        '''
+        
         
         plt.hist(Rel_Un_E2list_e, bins=200, range=[0,200], label='Uncertainty in E$_{2}$', histtype='step')
         plt.legend()
@@ -811,129 +567,6 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
         plt.show()
         plt.close()
         '''
-        plt.hist(Rel_Un_E2list_lo, bins=200, range=[0,200], label='Uncertainty in E$_{2}$', histtype='step')
-        plt.legend()
-        plt.xlabel("Relative Uncertainty (%)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title("Uncertainty Plot - Birks")
-        plt.show()
-        plt.close()
-        '''
-        '''
-        plt.hist(Un_Etoflist_mcnp, bins=1000, range=[0,10], label='Uncertainty in MCNP E$_{tof}$', histtype='step')
-        plt.legend()
-        plt.xlabel("Uncertainty in Energy (MeV)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title("Uncertainty Plot - MCNP")
-        plt.show()
-        plt.close()
-        '''
-        '''
-        plt.hist(Rel_Un_Etoflist_mcnp, bins=200, range=[0,200], label='Uncertainty in MCNP E$_{tof}$', histtype='step')
-        plt.legend()
-        plt.xlabel("Relative Uncertainty (%)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title("Uncertainty Plot - Birks")
-        plt.show()
-        plt.close()
-        '''
-        '''
-        plt.hist(Un_Etoflist_calc, bins=1000, range=[0,10], label='Uncertainty in calc E$_{tof}$', histtype='step')
-        plt.legend()
-        plt.xlabel("Uncertainty in Energy (MeV)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title("Uncertainty Plot - MCNP")
-        plt.show()
-        plt.close()
-        '''
-        '''
-        plt.hist(Rel_Un_Etoflist_calc, bins=200, range=[0,200], label='Uncertainty in calc E$_{tof}$', histtype='step')
-        plt.legend()
-        plt.xlabel("Relative Uncertainty (%)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title("Uncertainty Plot - Birks")
-        plt.show()
-        plt.close()
-        
-        plt.hist(Un_Totlist, bins=1000, range=[0,10], histtype='step')
-        plt.xlabel("Uncertainty in Energy (MeV)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title('Uncertainty in E$_{total}$')
-        plt.show()
-        plt.close()
-        
-        plt.hist(Rel_Un_Totlist, bins=200, range=[0,200], histtype='step')
-        plt.xlabel("Relative Uncertainty (%)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title('Uncertainty in E$_{total}$')
-        plt.show()
-        plt.close()
-        
-        plt.hist(Un_E1list_lo, bins=1000, range=[0,10], label='Uncertainty in E$_{1}$', histtype='step')
-        plt.hist(Un_Etoflist_calc, bins=1000, range=[0,10], label='Uncertainty in E$_{TOF}$', histtype='step')
-        plt.hist(Un_Totlist, bins=1000, range=[0,10], label='Uncertainty in E$_{total}$', histtype='step')
-        plt.legend()
-        plt.xlim(0,2)
-        plt.xlabel("Uncertainty (MeV)")
-        plt.ylabel("Counts")
-        plt.tight_layout()
-        plt.title("Uncertainty Plot")
-        plt.show()
-        plt.close()
-        
-        plt.hist(Un_E1list_lo, bins=1000, range=[0,10], label='Uncertainty in E$_{1}$', histtype='step')
-        plt.hist(Un_Etoflist_calc, bins=1000, range=[0,10], label='Uncertainty in E$_{TOF}$', histtype='step')
-        plt.hist(Un_Totlist, bins=1000, range=[0,10], label='Uncertainty in E$_{total}$', histtype='step')
-        plt.legend()
-        plt.xlim(0,2)
-        plt.xlabel("Uncertainty (MeV)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title("Uncertainty Plot")
-        plt.show()
-        plt.close()
-        
-        plt.hist(Rel_Un_E1list_lo, bins=200, range=[0,200], label='Uncertainty in E$_{1}$', histtype='step')
-        plt.hist(Rel_Un_Etoflist_calc, bins=200, range=[0,200], label='Uncertainty in E$_{TOF}$', histtype='step')
-        plt.hist(Rel_Un_Totlist, bins=200, range=[0,200], label='Uncertainty in E$_{total}$', histtype='step')
-        plt.xlim(0,200)
-        plt.legend()
-        plt.xlabel("Relative Uncertainty (%)")
-        plt.ylabel("Counts")
-        plt.tight_layout()
-        plt.title("Relative Uncertainty Plot")
-        plt.show()
-        plt.close()
-        
-        plt.hist(Rel_Un_E1list_lo, bins=200, range=[0,200], label='Uncertainty in E$_{1}$', histtype='step')
-        plt.hist(Rel_Un_Etoflist_calc, bins=200, range=[0,200], label='Uncertainty in E$_{TOF}$', histtype='step')
-        plt.hist(Rel_Un_Totlist, bins=200, range=[0,200], label='Uncertainty in E$_{total}$', histtype='step')
-        plt.xlim(0,200)
-        plt.legend()
-        plt.xlabel("Relative Uncertainty (%)")
-        plt.ylabel("Counts")
-        plt.yscale('log')
-        plt.tight_layout()
-        plt.title("Relative Uncertainty Plot")
-        plt.show()
-        plt.close()
-        '''
-    
         return Data_Out[:good_counter], Etotlist_e
     
     """
@@ -1067,9 +700,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
             Alpha_Var = Variances[0]
             Beta_Var = Variances[1]/(x*x + y*y + z*z)      
             Z = np.exp(-1.0*((beta - Alpha)*(beta - Alpha))/(2*(Alpha_Var**2+Beta_Var**2)))
-            # print('Test 1!') #
-            # print("Energy deposited in OGS bar:        "+str(Event[8])+" keV")
-            # print("Energy deposited in CeBr3 cylinder: "+str(Event[9])+ " keV")
+            
             return Z, Cone_Vector, (Alpha_Var/Alpha), Alpha
         elif Scattering_Angle > 90.0:
             dot_product[dot_product>0.0] = 0.0
@@ -1079,9 +710,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
             Alpha_Var = Variances[0]
             Beta_Var = Variances[1]/(x*x + y*y + z*z)
             Z = np.exp(-1.0*((beta - Alpha)*(beta - Alpha))/(2*(Alpha_Var**2+Beta_Var**2)))
-            # print('Test 2!') #
-            # print("Energy deposited in OGS bar:        "+str(Event[8])+" keV")
-            # print("Energy deposited in CeBr3 cylinder: "+str(Event[9])+ " keV")
+            
             return Z, Cone_Vector, (Alpha_Var/Alpha), Alpha
         else:
             print('Undefined Scattering Angle!')
@@ -1107,12 +736,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
         un_E_2 = Event[13]
         un_Z_1 = 1#Z_1_un    extract from above data
         un_Z_2 = 1#Z_2_un
-        # un_Z_2 = (0.6/np.sqrt(12))
         
-        # print("OGS scatter energy:       "+"{:.6f}".format(E_1)+" MeV "+"+/- " "{:.6f}".format(un_E_1))
-        # print("CeBr3 interaction energy: "+"{:.6f}".format(E_2)+" MeV "+"+/- " "{:.6f}".format(un_E_2))
-        # print("OGS bar:         "+"{:.0f}".format(Event[0])+", X: "+"{:.5f}".format(x_1)+", Y: "+"{:.5f}".format(y_1)+", Z: "+"{:.5f}".format(z_1)+" +/- " "{:.5f}".format(un_Z_1))
-        # print("CeBr3 cylinder: "+"{:.0f}".format(Event[1])+", X: "+"{:.5f}".format(x_2)+", Y: "+"{:.5f}".format(y_2)+", Z: "+"{:.5f}".format(z_2)+" +/- " "{:.5f}".format(un_Z_2))    
         
         Alpha_Uncer = (4*m_e**2*un_E_1**2*(m_e*(1/(E_1 + E_2) - 1/E_2) + 1.0)**2/(E_1 + E_2)**4 + 
                       4*m_e**2*un_E_2**2*(m_e*(1/(E_1 + E_2) - 1/E_2) + 1.0)**2*(-1/(E_1 + E_2)**2 + 
@@ -1162,123 +786,8 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
                            (-y_1 + y_2)**2 + (-z_1 + z_2)**2)**(-1.5))**2)**0.5  
         return [Alpha_Uncer, Beta_Uncertainty]
         
-    '''
-    def Uncertainty(xdel,ydel,zdel,Event): #See the Uncertainty_Analysis.py script for where the 2 uncertainty functions come from
-        m_n = 939.56542052 #MeV*c**2
-        speed_light = 29.9792458 #cm/ns
-        Bar_1 = int(Event[0])
-        Bar_2 = int(Event[1])
-        x_1 = Event[2]
-        y_1 = Event[3]
-        z_1 = Event[4]
-        un_X_1 = 0.6/np.sqrt(12)
-        un_Y_1 = 0.6/np.sqrt(12)
-        un_Z_1 = Z_Uncertainty(z_1, Bar_1, (Event[11]))
-        x_2 = Event[5]
-        y_2 = Event[6]
-        z_2 = Event[7]
-        un_X_2 = 0.6/np.sqrt(12)
-        un_Y_2 = 0.6/np.sqrt(12)
-        un_Z_2 = Z_Uncertainty(z_2, Bar_2, (Event[12]))
-        t_diff = Event[8]
-        uncer_t_diff = 0.217 #ns
-        E_dep = Event[10] #E1
-        uncer_E_dep = Event[17] #Un_E_1
-        Alpha_Uncer = (E_dep**2*(0.25*m_n**2*un_X_1**2*(2*x_1 - 2*x_2)**2/(speed_light**4*t_diff**4) +
-                      0.25*m_n**2*un_X_2**2*(-2*x_1 + 2*x_2)**2/(speed_light**4*t_diff**4) +
-                      0.25*m_n**2*un_Y_1**2*(2*y_1 - 2*y_2)**2/(speed_light**4*t_diff**4) +
-                      0.25*m_n**2*un_Y_2**2*(-2*y_1 + 2*y_2)**2/(speed_light**4*t_diff**4) +
-                      0.25*m_n**2*un_Z_1**2*(2*z_1 - 2*z_2)**2/(speed_light**4*t_diff**4) +
-                      0.25*m_n**2*un_Z_2**2*(-2*z_1 + 2*z_2)**2/(speed_light**4*t_diff**4) +
-                      1.0*m_n**2*uncer_t_diff**2*((-x_1 + x_2)**2 + (-y_1 + y_2)**2 +
-                      (-z_1 + z_2)**2)**2/(speed_light**4*t_diff**6))**1.0/(E_dep + 0.5*m_n*((-x_1 + x_2)**2 +
-                      (-y_1 + y_2)**2 + (-z_1 + z_2)**2)/(speed_light**2*t_diff**2))**4 +
-                      0.25*m_n**2*uncer_E_dep**2*((-x_1 + x_2)**2 + (-y_1 + y_2)**2 +
-                      (-z_1 + z_2)**2)**2/(speed_light**4*t_diff**4*(E_dep + 0.5*m_n*((-x_1 + x_2)**2 +
-                      (-y_1 + y_2)**2 + (-z_1 + z_2)**2)/(speed_light**2*t_diff**2))**4))**0.5
-        Beta_Uncertainty = (un_X_1**2*((-2*x_1 + 2*xdel)*((-x_1 + xdel)*(x_1 - x_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-0.5) + (-y_1 + ydel)*(y_1 - y_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-0.5) + (-z_1 + zdel)*(z_1 - z_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-0.5))**2/((-x_1 + xdel)**2 + (-y_1 + ydel)**2 + (-z_1 + zdel)**2)**2 +
-                            ((-x_1 + xdel)*(x_1 - x_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) +
-                            (-y_1 + ydel)*(y_1 - y_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) +
-                            (-z_1 + zdel)*(z_1 - z_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-0.5))*(2*(-1.0*x_1 + 1.0*x_2)*(-x_1 + xdel)*(x_1 - x_2)*((x_1 - x_2)**2 +
-                            (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-1.5) + 2*(-1.0*x_1 + 1.0*x_2)*(-y_1 + ydel)*(y_1 - y_2)*((x_1 - x_2)**2 +
-                            (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-1.5) + 2*(-1.0*x_1 + 1.0*x_2)*(-z_1 + zdel)*(z_1 - z_2)*((x_1 - x_2)**2 +
-                            (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-1.5) + 2*(-x_1 + xdel)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) -
-                            2*(x_1 - x_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5))/((-x_1 + xdel)**2 + (-y_1 + ydel)**2 +
-                            (-z_1 + zdel)**2))**2 + un_X_2**2*((-x_1 + xdel)*(x_1 - x_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) +
-                            (-y_1 + ydel)*(y_1 - y_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) +
-                            (-z_1 + zdel)*(z_1 - z_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-0.5))**2*(2*(-x_1 + xdel)*(x_1 - x_2)*(1.0*x_1 - 1.0*x_2)*((x_1 - x_2)**2 +
-                            (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-1.5) - 2*(-x_1 + xdel)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-0.5) + 2*(1.0*x_1 - 1.0*x_2)*(-y_1 + ydel)*(y_1 - y_2)*((x_1 - x_2)**2 +
-                            (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-1.5) + 2*(1.0*x_1 - 1.0*x_2)*(-z_1 + zdel)*(z_1 - z_2)*((x_1 - x_2)**2 +
-                            (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-1.5))**2/((-x_1 + xdel)**2 + (-y_1 + ydel)**2 + (-z_1 + zdel)**2)**2 +
-                            un_Y_1**2*((-2*y_1 + 2*ydel)*((-x_1 + xdel)*(x_1 - x_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) +
-                            (-y_1 + ydel)*(y_1 - y_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) + (-z_1 + zdel)*(z_1 - z_2)*((x_1 - x_2)**2 +
-                            (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5))**2/((-x_1 + xdel)**2 + (-y_1 + ydel)**2 + (-z_1 + zdel)**2)**2 +
-                            ((-x_1 + xdel)*(x_1 - x_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) + (-y_1 + ydel)*(y_1 - y_2)*((x_1 - x_2)**2 +
-                            (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) + (-z_1 + zdel)*(z_1 - z_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-0.5))*(2*(-x_1 + xdel)*(x_1 - x_2)*(-1.0*y_1 + 1.0*y_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-1.5) + 2*(-1.0*y_1 + 1.0*y_2)*(-y_1 + ydel)*(y_1 - y_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-1.5) + 2*(-1.0*y_1 + 1.0*y_2)*(-z_1 + zdel)*(z_1 - z_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-1.5) + 2*(-y_1 + ydel)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) -
-                            2*(y_1 - y_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5))/((-x_1 + xdel)**2 + (-y_1 + ydel)**2 +
-                            (-z_1 + zdel)**2))**2 + un_Y_2**2*((-x_1 + xdel)*(x_1 - x_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) +
-                            (-y_1 + ydel)*(y_1 - y_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) + (-z_1 + zdel)*(z_1 - z_2)*((x_1 - x_2)**2 +
-                            (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5))**2*(2*(-x_1 + xdel)*(x_1 - x_2)*(1.0*y_1 - 1.0*y_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-1.5) + 2*(-y_1 + ydel)*(y_1 - y_2)*(1.0*y_1 - 1.0*y_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-1.5) -
-                            2*(-y_1 + ydel)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) +
-                            2*(1.0*y_1 - 1.0*y_2)*(-z_1 + zdel)*(z_1 - z_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-1.5))**2/((-x_1 + xdel)**2 + (-y_1 + ydel)**2 + (-z_1 + zdel)**2)**2 +
-                            un_Z_1**2*((-2*z_1 + 2*zdel)*((-x_1 + xdel)*(x_1 - x_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-0.5) + (-y_1 + ydel)*(y_1 - y_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-0.5) + (-z_1 + zdel)*(z_1 - z_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-0.5))**2/((-x_1 + xdel)**2 + (-y_1 + ydel)**2 + (-z_1 + zdel)**2)**2 +
-                            ((-x_1 + xdel)*(x_1 - x_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) +
-                            (-y_1 + ydel)*(y_1 - y_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) +
-                            (-z_1 + zdel)*(z_1 - z_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5))*(2*(-x_1 + xdel)*(x_1 -
-                            x_2)*(-1.0*z_1 + 1.0*z_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-1.5) + 2*(-y_1 + ydel)*(y_1 -
-                            y_2)*(-1.0*z_1 + 1.0*z_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-1.5) + 2*(-1.0*z_1 + 1.0*z_2)*(-z_1 +
-                            zdel)*(z_1 - z_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-1.5) + 2*(-z_1 + zdel)*((x_1 - x_2)**2 +
-                            (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) - 2*(z_1 - z_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-0.5))/((-x_1 + xdel)**2 + (-y_1 + ydel)**2 + (-z_1 + zdel)**2))**2 + un_Z_2**2*((-x_1 +
-                            xdel)*(x_1 - x_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) + (-y_1 + ydel)*(y_1 - y_2)*((x_1 -
-                            x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5) + (-z_1 + zdel)*(z_1 - z_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-0.5))**2*(2*(-x_1 + xdel)*(x_1 - x_2)*(1.0*z_1 - 1.0*z_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-1.5) + 2*(-y_1 + ydel)*(y_1 - y_2)*(1.0*z_1 - 1.0*z_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-1.5) + 2*(-z_1 + zdel)*(z_1 - z_2)*(1.0*z_1 - 1.0*z_2)*((x_1 - x_2)**2 + (y_1 - y_2)**2 +
-                            (z_1 - z_2)**2)**(-1.5) - 2*(-z_1 + zdel)*((x_1 - x_2)**2 + (y_1 - y_2)**2 + (z_1 - z_2)**2)**(-0.5))**2/((-x_1 + xdel)**2 +
-                            (-y_1 + ydel)**2 + (-z_1 + zdel)**2)**2)**0.5
-        return [Alpha_Uncer, Beta_Uncertainty]
-    '''
-    def Uncertainty_TOF(Event):
-        m_n = 939.56542052 #MeV*c**2
-        speed_light = 29.9792458 #cm/ns
-        Bar_1 = int(Event[0])
-        Bar_2 = int(Event[1])
-        x_1 = Event[2]
-        y_1 = Event[3]
-        z_1 = Event[4]
-        un_X_1 = 0.6/np.sqrt(12)
-        un_Y_1 = 0.6/np.sqrt(12)
-        un_Z_1 = Z_Uncertainty(z_1, Bar_1, (Event[11]*1000))
-        x_2 = Event[5]
-        y_2 = Event[6]
-        z_2 = Event[7]
-        un_X_2 = 0.6/np.sqrt(12)
-        un_Y_2 = 0.6/np.sqrt(12)
-        un_Z_2 = Z_Uncertainty(z_2, Bar_2, (Event[12]*1000))
-        t_diff = Event[8]
-        uncer_t_diff = 0.217 #ns
-        Uncer_TOF = (0.25*m_n**2*un_X_1**2*(2*x_1 - 2*x_2)**2/(speed_light**4*t_diff**4) + 0.25*m_n**2*un_X_2**2*(-2*x_1 +
-                    2*x_2)**2/(speed_light**4*t_diff**4) + 0.25*m_n**2*un_Y_1**2*(2*y_1 - 2*y_2)**2/(speed_light**4*t_diff**4)
-                    + 0.25*m_n**2*un_Y_2**2*(-2*y_1 + 2*y_2)**2/(speed_light**4*t_diff**4) + 0.25*m_n**2*un_Z_1**2*(2*z_1 -
-                    2*z_2)**2/(speed_light**4*t_diff**4) + 0.25*m_n**2*un_Z_2**2*(-2*z_1 + 2*z_2)**2/(speed_light**4*t_diff**4) +
-                    1.0*m_n**2*uncer_t_diff**2*((-x_1 + x_2)**2 + (-y_1 + y_2)**2 + (-z_1 + z_2)**2)**2/(speed_light**4*t_diff**6))**0.5
-        return Uncer_TOF
+    
+
     
     def Real_projection(Energy_Data):
         Data_Out = np.zeros((len(Position_Data),16))
@@ -1300,7 +809,8 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
     #%%
     
     def attach_history(data):
-        file_path = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\L\output.xlsx"
+        #file_path = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\L\output.xlsx"
+        file_path = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\test_2\output.xlsx"
         df = pd.read_excel(file_path)
         array = df.to_numpy()
         attached = array[:,-1]
@@ -1349,8 +859,9 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
 # %%
 #-----------------------------------------------------------------------------1
 #file_path = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\project\Simulation_gamma_Doubles_File_OGS_PyMPPost_Processed.dat"
+file_path = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\test_2\Simulation_gamma_Doubles_File_OGS_PyMPPost_Processed.dat"
 #file_path = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\New_test\Simulation_gamma_Doubles_File_OGS_PyMPPost_Processed.dat"
-file_path =  r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\L\Simulation_gamma_Doubles_File_OGS_PyMPPost_Processed.dat"
+#file_path =  r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\L\Simulation_gamma_Doubles_File_OGS_PyMPPost_Processed.dat"
 z_data, E_out, weird_data_out = run_BP(file_path, Radius=10) #radius self=define?
 
 
@@ -1364,11 +875,17 @@ plt.xlabel("Azimuthal Angle (θ)")
 plt.ylabel("Altitude Angle (φ)")
 plt.colorbar()
 
+
+
 #%% export weird data used for dubugging
 
-file_path = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\L\dumn1"
+
+
+#file_path = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\L\dumn1"
+file_path = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\test_2\dumn1"
 data_raw = np.loadtxt(file_path)
-dest = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\L\data_compare.xlsx"
+#dest = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\L\data_compare.xlsx"
+dest = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\test_2\data_compare.xlsx"
 
 cols_post =  ['Bar_1', 'Bar_2', 'x1', 'y1', 'z1', 'x2', 'y2', 'z2', 'tof', 
            'Edep1_d', 'Edep2_d', 'Esum', "13","14","15", "history", "alpha value"]
@@ -1391,22 +908,3 @@ with pd.ExcelWriter(dest) as writer:
     df_w_r.to_excel(writer, sheet_name='wierd_raw', index=False)
     df_acc.to_excel(writer, sheet_name='acc_data', index=False)
     df_acc_r.to_excel(writer, sheet_name='acc_raw', index=False)
-
-#%%
-'''
-unique_values, counts = np.unique(filtered_w_r[:,0], return_counts=True)
-print(dict(zip(unique_values, counts)))
-
-unique_values, counts = np.unique(filtered_acc_r[:,0], return_counts=True)
-print(dict(zip(unique_values, counts)))
-'''
-
-
-
-
-
-
-
-
-
-
