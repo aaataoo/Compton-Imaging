@@ -6,12 +6,15 @@ Created on Tue Feb 11 22:12:18 2025
 """
 
 import numpy as np
+from numba import njit, prange
 import pandas as pd
 import os
 import time
-#folder = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\L"
-folder = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\alright\Cf252_0,0"
-start_time = time.time()
+
+
+folder = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\L"
+#folder = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\validation\CF252_center"
+#%%
 
 
 def Writing_Data(Doubles_Data):
@@ -98,6 +101,7 @@ Bar_Num_to_MCNP_Cell = np.array([
 finds and returns the coincident events based on the events occuring within the time window
 only return double events
 '''
+@njit
 def Finding_Coincident_Events(All_Times, Min_Time_Window_Bar, Max_Time_Window_Bar):
     
     Coincidences = []
@@ -113,32 +117,101 @@ def Finding_Coincident_Events(All_Times, Min_Time_Window_Bar, Max_Time_Window_Ba
         Fourth = All_Times[Data_Counter+3]
         if First == 0:
             Data_Counter+=1
+            continue
+        
+        First_Diff = Second - First 
+        Second_Diff = Third - First
+        Third_Diff = Fourth - First
+        if Min_Time_Window_Bar < Third_Diff < Max_Time_Window_Bar:
+            Coincidence_Four.append((First, Second, Third, Fourth))
+            Data_Counter += 4
+        elif Min_Time_Window_Bar < Second_Diff < Max_Time_Window_Bar:
+            Coincidence_Triples.append((First, Second, Third))
+            Data_Counter += 3
+        elif Min_Time_Window_Bar < First_Diff < Max_Time_Window_Bar:
+            Coincidence_Doubles.append((First, Second))
+            Coincidences.append((First, Second))
+            Data_Counter += 2
         else:
-            First_Diff = Second - First 
-            Second_Diff = Third - First
-            Third_Diff = Fourth - First
-            if Third_Diff < Max_Time_Window_Bar and Third_Diff > Min_Time_Window_Bar:
-                Coincidence = [First, Second, Third, Fourth]
-                Coincidence_Four.append(Coincidence)
-                Data_Counter+=4
-            elif Second_Diff < Max_Time_Window_Bar and Second_Diff > Min_Time_Window_Bar:
-                Coincidence = [First, Second, Third]
-                Coincidence_Triples.append(Coincidence)
-                Data_Counter+=3
-            elif First_Diff < Max_Time_Window_Bar and First_Diff > Min_Time_Window_Bar:
-                Coincidence = [First, Second]
-                Coincidence_Doubles.append(Coincidence)
-                Coincidences.append(Coincidence)
-                Data_Counter+=2
-            else:
-                Data_Counter+=1
-                
+            Data_Counter += 1
+            
+   
+            
     print("MCNP Gamma Event (After Coincidence Logic):")
     print("Number of Double Events: "+str(len(Coincidence_Doubles)))
     print("Number of Triple Events: "+str(len(Coincidence_Triples)))
     print("Number of Four Events: "+str(len(Coincidence_Four)))
     print("\n")
     return Coincidences
+
+def process_all_double_events(
+    events, data_g, data_raw,
+    bar_ids, bar_cells,
+    time_keys, time_indices,
+    unique_histories, first_indices
+):
+    n = len(events)
+    Coincident_Data_Out = np.zeros((n, 12))
+    recorded_history = np.zeros(n)
+    time_window_verify = np.zeros(n)
+    valid_mask = np.zeros(n, dtype=np.bool_)
+
+    for i in range(n):  #  用 prange 讓 Numba 平行處理
+        t0, t1 = events[i][0], events[i][1]
+
+        idx_B1 = -1
+        idx_B2 = -1
+        for k in range(len(time_keys)):
+            if time_keys[k] == t0:
+                idx_B1 = time_indices[k]
+            if time_keys[k] == t1:
+                idx_B2 = time_indices[k]
+        if idx_B1 == -1 or idx_B2 == -1:
+            continue
+
+        bar1 = data_g[idx_B1, 1]
+        bar2 = data_g[idx_B2, 1]
+
+        bar1_num = -1
+        bar2_num = -1
+        for j in range(len(bar_ids)):
+            if bar_ids[j] == bar1:
+                bar1_num = bar_cells[j]
+            if bar_ids[j] == bar2:
+                bar2_num = bar_cells[j]
+        if bar1_num == -1 or bar2_num == -1:
+            continue
+
+        if bar1_num == bar2_num or not (bar1_num <= 12 and 13 <= bar2_num <= 20):
+            continue
+
+        hist_id = data_g[idx_B1, 0]
+        raw_idx = -1
+        for m in range(len(unique_histories)):
+            if unique_histories[m] == hist_id:
+                raw_idx = first_indices[m]
+                break
+        if raw_idx == -1:
+            continue
+
+        r1 = data_raw[raw_idx]
+        Coincident_Data_Out[i, 0] = bar1_num
+        Coincident_Data_Out[i, 1] = bar2_num
+        Coincident_Data_Out[i, 2:5] = r1[8:11]
+        Coincident_Data_Out[i, 5:8] = r1[8:11]  # fallback
+        Coincident_Data_Out[i, 8] = t1 - t0
+        Coincident_Data_Out[i, 9] = r1[6]
+        Coincident_Data_Out[i,10] = r1[6]
+        Coincident_Data_Out[i,11] = r1[6] * 2
+
+        recorded_history[i] = hist_id
+        time_window_verify[i] = hist_id
+        valid_mask[i] = True
+
+    return Coincident_Data_Out[valid_mask], recorded_history[valid_mask]
+
+
+
 
 
 
@@ -150,10 +223,10 @@ if multiple_files:
         '''
         change the filename to gamma files
         '''
-        filename = "dumn1_All_Pulses"
-        data = np.loadtxt(os.path.join(folder, filename))  #(datatype ndarray)
-        filename = "dumn1"
-        data_raw = np.loadtxt(os.path.join(folder, filename))
+        filename = "dumn1_All_Pulses.npy"
+        data = np.load(os.path.join(folder, filename))  #(datatype ndarray)
+        filename = "dumn1.npy"
+        data_raw = np.load(os.path.join(folder, filename))
 
         idx_g = np.where(data[:,3] == 2) #index of gammas
         # search from 4th, return the 'True' value, which row or column of data fullfil the condition from all_pulse
@@ -187,7 +260,7 @@ if multiple_files:
         
         All_Start_Times = data_g[:,5]
         time_add_hist = 0.0
-    
+        
         for i in range(len(All_Start_Times)):
             time_add = i*1000000000
             hist_num = data_g[i-1,0]
@@ -199,65 +272,44 @@ if multiple_files:
             #same history seems the time is the same
         
         Sorted_All_Start_Times = np.sort(All_Start_Times)
+        
         Coincident_Events_no_psd = Finding_Coincident_Events(Sorted_All_Start_Times, Min_Time_Window, Max_Time_Window)
+        Coincident_Events_no_psd = [list(data) for data in Coincident_Events_no_psd]
         '''
         above is discriminating the events, only double events are returned
         '''
        
+        bar_ids = Bar_Num_to_MCNP_Cell[:,1].astype(np.int64)
+        bar_cells = Bar_Num_to_MCNP_Cell[:,0].astype(np.int64)
         
+        # 把 data_g 第5欄（event time）對應的 index 儲存成 array
+        time_keys = data_g[:,5].astype(np.float64)
+        time_indices = np.arange(len(data_g)).astype(np.int64)
+        
+        # 針對 raw data 裡每個 history 分組（只選第一個 index即可）：
+        raw_histories = data_raw[:,0]
+        unique_histories, first_indices = np.unique(data_raw[:,0], return_index=True)
         
         
         '''
         below is doing psd removal to seperate neutrons and gammas
         find the mesh to cell map
         '''
-        time_window_verify = [] #del once verify
-        recorded_history = [] # in the later data verification, this term is easy to lookup in raw data
-        folder_psd_double_counts = 0
-        for coincidence in np.arange(0,len(Coincident_Events_no_psd),1):
         
-            idx_B1    = np.where(data_g[:,5] == Coincident_Events_no_psd[coincidence][0]) #index
-            First_Bar = data_g[idx_B1,1] #the cell number in mcnp
-            
-            First_Bar_number = Bar_Num_to_MCNP_Cell[np.where(Bar_Num_to_MCNP_Cell[:,1] == First_Bar)[1],0]
-
-            idx_B2    = np.where(data_g[:,5] == Coincident_Events_no_psd[coincidence][1])
-            Second_Bar = data_g[idx_B2,1]
-            Second_Bar_number = Bar_Num_to_MCNP_Cell[np.where(Bar_Num_to_MCNP_Cell[:,1] == Second_Bar)[1],0]
-            lookup_d = data_raw[:,0]      #histories
-            lookup_o = data_g[idx_B1,0] #histories
-            time_window_verify.append(lookup_o) #del once verify
-            
-            idx_B1_coord = np.where(lookup_d == lookup_o)
-            
-            
-            if First_Bar_number != Second_Bar_number and First_Bar_number<=12 and 13<= Second_Bar_number <=20: 
-                recorded_history.append(lookup_o)
-                d_file_B1 = int(First_Bar)
-                d_file_B2 = int(Second_Bar)
-                
-                d_file_bars_in_history = data_raw[idx_B1_coord[1],5]
-                
-                d_file_B1_idx = np.where(d_file_B1 == d_file_bars_in_history)[0]
-                d_file_B2_idx = np.where(d_file_B2 == d_file_bars_in_history)[0]
-                
-                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][0] =  First_Bar_number                                     # Bar 1 Nr.
-                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][1] =  Second_Bar_number                                    # Bar 2 Nr.
-                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][2] =  data_raw[idx_B1_coord[1][d_file_B1_idx],8][0]   # x Bar 1
-                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][3] =  data_raw[idx_B1_coord[1][d_file_B1_idx],9][0]   # y Bar 1
-                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][4] =  data_raw[idx_B1_coord[1][d_file_B1_idx],10][0]  # z Bar 1
-                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][5] =  data_raw[idx_B1_coord[1][d_file_B2_idx],8][0]   # x Bar 2
-                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][6] =  data_raw[idx_B1_coord[1][d_file_B2_idx],9][0]   # y Bar 2
-                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][7] =  data_raw[idx_B1_coord[1][d_file_B2_idx],10][0]  # z Bar 2
-                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][8] =  (data_g[idx_B2,5] - data_g[idx_B1,5])         # TOF Bar 1 to 2
-                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][9] =  data_raw[idx_B1_coord[1][d_file_B1_idx],6][0]   # Edep Bar 1 energy released 
-                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][10] = data_raw[idx_B1_coord[1][d_file_B2_idx],6][0]   # Edep Bar 2 energy released
-                Coincident_Data_Out[folder_psd_double_counts+total_psd_double_counts][11] =  data_raw[idx_B1_coord[1][d_file_B1_idx],6][0] + data_raw[idx_B1_coord[1][d_file_B2_idx],6][0] #E_dep bar1 +E_dep bar2  
-                folder_psd_double_counts = folder_psd_double_counts + 1
-    
-    end_time = time.time()
-    elapsed_time = end_time - start_time
-    print(f"執行時間: {elapsed_time:.4f} 秒")                    
+        recorded_history = [] # in the later data verification, this term is easy to lookup in raw data
+        
+        Coincident_Events_no_psd = np.array(Coincident_Events_no_psd)
+        
+        start_time = time.time()
+        Coincident_Data_Out,recorded_history = process_all_double_events(
+            Coincident_Events_no_psd, data_g, data_raw,
+            bar_ids, bar_cells, time_keys, time_indices,
+            unique_histories, first_indices)
+        end_time = time.time()
+        elapsed_time = end_time - start_time
+        print(f"執行時間: {elapsed_time:.4f} 秒")                   
+           
+    folder_psd_double_counts = len(Coincident_Data_Out)
     print("After determining the first event at OGS bar and second event at CeBr3:")
     print("MCNP gammas Event (After Coincidence Logic):")
     print("Number of Double Events: "+str(folder_psd_double_counts))
@@ -279,16 +331,13 @@ elapsed_time = end_time - start_time
 print(f"執行時間結束: {elapsed_time:.4f} 秒")
 #%%
 
-import numpy as np
-import pandas as pd
-
 def Writing_Data_to_xlsx(Doubles_Data, file):
     columns = ['Bar_1', 'Bar_2', 'x1', 'y1', 'z1', 'x2', 'y2', 'z2', 'tof', 
                'Edep1_d', 'Edep2_d', 'Etotal']
     
     
     df = pd.DataFrame(Doubles_Data, columns=columns)
-    df['history'] = [x[0][0] for x in recorded_history]
+    df['history'] = recorded_history
     
     df.to_excel(file, index=False)
 file_destination = "output.xlsx"

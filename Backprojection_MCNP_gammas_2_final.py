@@ -17,8 +17,9 @@ import os
 sns.set(rc={"figure.dpi":350, 'savefig.dpi':300})
 sns.set_style("ticks")
 sns.set_context("talk", font_scale=0.8)
-folder = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\L"
+folder = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\for report\MoreCs137_90,0"
 #folder = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\alright\Cf252_0,0"
+#folder = r"C:\Users\artao\Desktop\Master\NERS599 independent reseach 25WN\for report\CF252_center"
 """
  ___            __  ___    __        __  
 |__  |  | |\ | /  `  |  | /  \ |\ | /__` 
@@ -30,15 +31,15 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
 
     from matplotlib.colors import LogNorm
     from matplotlib import cm
-    from dataloader_Doubles_neutron_simulation_v2 import DataLoader_Doubles_Neutron_Simulation, DataLoader_Doubles_Gamma_Simulation
+    from dataloader_Doubles_neutron_simulation_v2 import DataLoader_Doubles_Gamma_Simulation
     np.random.seed(117)
     ##############################################
     ############ Parameters to change ############
     ##############################################
         
     Relative_Uncertainty = 50 #100000  #Originally 50
-    Number_Cones_to_Project = 600000                #max of the cones
-    Energy_gate = [0.662,0.662] # Energy_gate[0] +- Energy_gate[1] in MeV
+    Number_Cones_to_Project = 2057            #max of the cones
+    Energy_gate = [0.6 ,200] # Energy_gate[0] +- Energy_gate[1] in MeV
     
     ##############################################
     
@@ -98,7 +99,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
                                           
     """
     def Time_Cuts(Waves, Min_Time_Window, Max_Time_Window):
-        Data_Out = np.zeros_like(Waves) #?????????????????????????check
+        Data_Out = np.zeros_like(Waves) 
         good_counter = 0
     
         for event in np.arange(0, len(Waves), 1):
@@ -119,7 +120,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
     |___    \__, \__/  |  .__/
     """
     
-    def Apply_E_Cuts(Doubles_Data): #filtered the double events in our ROI, 做能量切片?
+    def Apply_E_Cuts(Doubles_Data): 
         Data_Out =  np.zeros_like(Doubles_Data) 
         Edep_1_Counter = 0
         Edep_2_Counter = 0
@@ -128,9 +129,9 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
              
         for double in Doubles_Data:
             E1_pass = False
-            Edep_1 = double[9] #modified
+            Edep_1 = double[9] 
             E2_pass = False
-            Edep_2 = double[10] #modified
+            Edep_2 = double[10]
             if Edep_1 > E_Cutoff/1000 and Edep_1 < Max_E_Cutoff/1000:
                 Edep_1_Counter+=1
                 E1_pass = True
@@ -145,7 +146,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
         print("\n")
         print("Number of interactions in first bar within LO thresholds/E thresholds: "+str(Edep_1_Counter))
         print("Number of interactions in second bar within LO thresholds/E thresholds: "+str(Edep_2_Counter))
-        print("Number of interactions within LO thresholds/E thresholds in both: "+str(Edep_Both))
+        print("Interactions within LO/E limits and energy gate: "+str(Edep_Both))
         print("\n")
         return Data_Out[:Edep_Both]
     
@@ -295,16 +296,10 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
         print("\n")
         return Data_Out[:good_counter] #return the data that happenned within the bars
     
-    """
-     ___  __   ___ 
-      |  /  \ |__  
-      |  \__/ |   
-    """
+
     #change the e error to 10% of E instead of 1 kev!
-    def E_TOF_LO(Position_Data):
-        Data_Out = np.zeros((len(Position_Data),16)) #+7 new entries? why seven more entries
-        
-        
+    def E_Un_Plt(Position_Data):
+        Data_Out = np.zeros((len(Position_Data),16))
         E1list_e = []
         E2list_e = []
         Etotlist_e = []
@@ -315,11 +310,8 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
         Un_E1list_e = []
         Rel_Un_E1list_e = []
         
-        
         Un_E2list_e = []
         Rel_Un_E2list_e = []
-        
-        
         
         good_counter = 0
         
@@ -338,9 +330,10 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
             Diff_Vecs = Vector_1 - Vector_2
             
             E_1_e = Position_Data[event][9]  #Edep1 in terms of MeV
-            Un_E_1_e = 0.001
+            Un_E_1_e = 0.1 * E_1_e
             E_2_e = Position_Data[event][10] #Edep2 in terms of MeV
-            Un_E_2_e = 0.001
+            Un_E_2_e = 0.1 * E_2_e
+            
             E_total_v = Position_Data[event][11]
             Un_E_total_v = np.sqrt(Un_E_1_e**2 + Un_E_2_e**2)
             
@@ -416,8 +409,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
         plt.show()
         plt.close()
     
-        # plot that pairs distance and energy?
-    
+        '''
         ## Uncertainty Plots  
         print("[Direct]     Average Neutron Energy Deposition in First Scatter: "+str(np.average(E1list_e))+" MeV")
         print("[Direct]     Average Neutron Energy Deposition in Second Scatter: "+str(np.average(E2list_e))+" MeV")
@@ -428,6 +420,8 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
         print("[Direct]     Average Neutron Energy Deposition (First Scatter) Relative Uncertainty: "+str(np.average(Rel_Un_E1list_e))+" %")
         print("[Direct]     Average Neutron Energy Deposition (Second Scatter) Relative Uncertainty: "+str(np.average(Rel_Un_E2list_e))+" %")
         print("\n")
+        '''
+        
         '''
         plt.hist(E1list_e, bins=100, range=[0,10], histtype='step')
         plt.xlabel("Energy (MeV)")
@@ -532,7 +526,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
                 if Energy_Data[Event][14] < Relative_Uncertainty:
                     Energies_Not_Extracted.append(Energy_Data[Event][11]) #E_total
                     Z_Data = Creating_Real_Projections(Energy_Data[Event], Radius, Theta_Rad, Phi_Rad)  #Z, Cone_Vector, (Alpha_Var/Alpha)
-                    
+                    # make sure there is no scatter angle greater than one
                     if abs(Z_Data[-1])>1:
                         weird_data = Energy_Data[Event].reshape(1,-1)
                         weird_alpha_data = np.append(weird_alpha_data, weird_data , axis =0)
@@ -561,11 +555,12 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
                     #if counter%1000 == 0:
                     if counter%100000 == 0:
                         print("Cone "+str(counter)+' / '+str(len(Energy_Data))+" being projected.")
+        
         alpha_array = np.array(alpha_list).reshape(-1,1)
         alpha_array_acc = np.array(alpha_acc_list).reshape(-1,1)
         weird_data_out = np.concatenate([weird_alpha_data, alpha_array], axis=1)
         acc_data_out = np.concatenate([accept_alpha_data, alpha_array_acc], axis=1)
-        Z = np.roll(Z, int(Binning/4.0), axis=1)   #移動元素 沿著列方向右移 (binninb/4.0)
+        Z = np.roll(Z, int(Binning/4.0), axis=1)   
         Z = Z[::-1] 
     
         for row in np.arange(0,len(Z), 1):
@@ -614,7 +609,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
             print('Undefined Scattering Angle!')
             return 0, -1    
     """
-                __   ___  __  ___             ___     
+               __   ___  __  ___             ___     
     |  | |\ | /  ` |__  |__)  |   /\  | |\ |  |  \ / 
     \__/ | \| \__, |___ |  \  |  /~~\ | | \|  |   |  
                                                     
@@ -707,7 +702,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
     #%%
     
     def attach_history(data):
-        filename = "output.xlsx"
+        filename = "output_data.xlsx"
         
         df = pd.read_excel(os.path.join(folder, filename))
         array = df.to_numpy()
@@ -718,19 +713,17 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
     
     
     #------------------------------------------------------------------------3
+    #load data
     Data = DataLoader_Doubles_Gamma_Simulation((Doubles_File_Name))#load data from other program
-    #print(Data.shape)
-    #print(type(Data))
-    
     Number_of_data_structures = Data.GetNumberOfWavesInFile()#same size of gammas event #load data from other program
     Waves = Data.LoadWaves(Number_of_data_structures) #all datas (events, 13)
-    Doubles_Data = Bar_Counts(Waves)                                           ## return output data from write gamma simulations
+    Doubles_Data = Bar_Counts(Waves)              ## return output data from write gamma simulations
     Doubles_Data = attach_history(Doubles_Data)
     #-------------------------------------------------------------------------5
     E_Cut_Applied = Apply_E_Cuts(Doubles_Data)                                 ## #filtered the double events in our ROI
     Position_Data = Convert_Channel_to_Position(E_Cut_Applied)
     Timing_Data = Time_Cuts(Position_Data, Min_Time_Window, Max_Time_Window)
-    Energy_Data = E_TOF_LO(Timing_Data)
+    Energy_Data = E_Un_Plt(Timing_Data)
     Filtered_data = Real_projection(Energy_Data[0])
     
     print("\n")
@@ -743,6 +736,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
     print("Number of cones after rel. uncert. cut: "+str(len(E_out)))
     print("\n")
     
+    '''
     plt.hist(E_out, bins=100, range=[0,10], histtype='step')
     plt.xlabel("Neutron Energy (MeV)")
     plt.ylabel("Counts")
@@ -751,7 +745,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
     plt.title("Reconstructed Neutron Energy (After Imaging)")
     plt.show()
     plt.close()
-
+    '''
     return z_data, E_out, weird_data
 
 # %%
@@ -765,10 +759,25 @@ Binning = 180
 Azimuth = np.linspace(-180,180,Binning)
 Altitude = np.linspace(-90,90,Binning)
 Theta,Phi = np.meshgrid(Azimuth,Altitude)
+
+max_idx = np.unravel_index(np.argmax(z_data), z_data.shape)
+max_theta = Theta[max_idx]
+max_phi = Phi[max_idx]
+
+
+
+
 plt.pcolormesh(Theta,Phi,z_data, cmap='inferno')
 plt.xlabel("Azimuthal Angle (θ)")
 plt.ylabel("Altitude Angle (φ)")
+plt.title(f"Cones: {len(E_out)}")
 plt.colorbar()
+
+# Mark the lightest spot
+plt.scatter(max_theta, max_phi, facecolors='none', edgecolors='red', s=20, marker='o')
+
+
+
 plt.savefig(os.path.join(folder,"result.png"), dpi=300)
 plt.show()
 plt.close()
@@ -777,7 +786,7 @@ plt.close()
 #%% export weird data used for dubugging
 
 '''
-
+# this part is leave for debugging, export the data in excel form
 filename = "dumn1"
 data_raw = np.loadtxt(os.path.join(folder, filename))
 dest = "data_compare.xlsx"
