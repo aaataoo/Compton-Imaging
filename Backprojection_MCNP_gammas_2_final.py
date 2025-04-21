@@ -552,7 +552,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
                     Z_Data = Z_Data[0]
                     Z = Z + (Z_Data/(sum(sum(Z_Data))))
                     counter+=1
-                    #if counter%1000 == 0:
+                    
                     if counter%100000 == 0:
                         print("Cone "+str(counter)+' / '+str(len(Energy_Data))+" being projected.")
         
@@ -751,7 +751,7 @@ def run_BP(Doubles_File_Name, Radius, scipy=None):
 # %%
 #-----------------------------------------------------------------------------1
 filename =  "Simulation_gamma_Doubles_File_OGS_PyMPPost_Processed.dat"
-z_data, E_out, weird_data_out = run_BP(os.path.join(folder, filename), Radius=10) #radius self=define?
+z_data, E_out, weird_data_out = run_BP(os.path.join(folder, filename), Radius=10) 
 
 
 # Scratch with scripts needed to get plots from simulation backprojector
